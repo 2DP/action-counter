@@ -8,11 +8,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/2DP/action-counter/config"
 	"github.com/2DP/action-counter/model"
+	"github.com/2DP/action-counter/repository"
 )
 
 type Server struct {
 	Router *mux.Router
 	Config *config.Config
+	Repo repository.Repository;
 }
 
 
@@ -21,6 +23,8 @@ func (server *Server) Initialize(config *config.Config) {
 	server.Config = config
 	server.Router = mux.NewRouter()
 	server.setRouters()
+	
+	server.Repo.Initialize()
 }
 
 func (server *Server) setRouters() {
@@ -75,7 +79,7 @@ func (server *Server) GetCounter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 	
-	counter := model.Counter{UUID: uuid, Count:1}
+	counter := server.Repo.Get(uuid)
 
 	respondJSON(w, http.StatusOK, counter)
 }

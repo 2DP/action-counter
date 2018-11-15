@@ -1,3 +1,4 @@
+
 package model
 
 import (
@@ -7,4 +8,5 @@ import (
 type Counter struct {
 	UUID string `json:uuid`
 	Count int `json:count`
+	DurationMillis int64
 }
