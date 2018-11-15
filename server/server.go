@@ -24,7 +24,8 @@ func (server *Server) Initialize(config *config.Config) {
 }
 
 func (server *Server) setRouters() {
-	server.Get("/counter", server.CreateCounter)
+	server.Get("/counter/{uuid:[a-z0-9-]+}", server.GetCounter)
+	server.Post("/counter", server.CreateCounter) // body : {"duration-millis" : n}
 	server.Put("/counter/{uuid:[a-z0-9-]+}", server.UpdateCounter)
 	server.Delete("/counter/{uuid:[a-z0-9-]+}", server.DeleteCounter)
 }
@@ -69,16 +70,27 @@ func respondError(w http.ResponseWriter, code int, message string) {
 	respondJSON(w, code, map[string]string{"error": message})
 }
 
+func (server *Server) GetCounter(w http.ResponseWriter, r *http.Request) {
+	// TODO:uuid 로 카운터 조회 (증감 안함)
+	vars := mux.Vars(r)
+	uuid := vars["uuid"]
+	
+	counter := model.Counter{UUID: uuid, Count:1}
 
+	respondJSON(w, http.StatusOK, counter)
+}
 
 func (server *Server) CreateCounter(w http.ResponseWriter, r *http.Request) {
-	// TODO: 새로운 카운터 세션을 생성해서 반
+	// TODO: 새로운 카운터 세션을 생성해서 반환
+//	vars := mux.Vars(r)
+//	durationMillis := vars["duration-millis"]
+
 	counter := model.Counter{UUID: "test-uuid-001", Count:1}
 	respondJSON(w, http.StatusOK, counter)
 }
 
 func (server *Server) UpdateCounter(w http.ResponseWriter, r *http.Request) {
-	// TODO: 저장소에서 uuid로 카운터를 조회해서 카운터 증가 후 반
+	// TODO: 저장소에서 uuid로 카운터를 조회해서 카운터 증가 후 반환
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 
