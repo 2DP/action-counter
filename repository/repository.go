@@ -12,8 +12,6 @@ type Repository struct {
 
 func (repo *Repository) Initialize() {
 	repo.Repo = make(map[string]model.Counter)
-	
-	repo.Repo["test-uuid"] = model.Counter{UUID:"test-uuid", Count:10, DurationMillis:100}
 }
 
 func (repo *Repository) Get(uuid string) model.Counter {
@@ -22,5 +20,26 @@ func (repo *Repository) Get(uuid string) model.Counter {
 
 func (repo *Repository) Set(uuid string, counter model.Counter) model.Counter {
 	repo.Repo[uuid] = counter
+	return counter
+}
+
+func (repo *Repository) Increse(uuid string) model.Counter {
+	counter, contains := repo.Repo[uuid]
+	
+	if contains {
+		counter.Count++
+		repo.Repo[uuid] = counter
+	}
+		
+	return counter
+}
+
+func (repo *Repository) Delete(uuid string) model.Counter {
+	counter, contains := repo.Repo[uuid]
+
+	if contains {
+		delete(repo.Repo, uuid)
+	}
+	
 	return counter
 }

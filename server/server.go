@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"log"
-	
+		
 	"github.com/gorilla/mux"
 	"github.com/2DP/action-counter/config"
 	"github.com/2DP/action-counter/model"
 	"github.com/2DP/action-counter/repository"
+	"github.com/satori/go.uuid"
 )
 
 type Server struct {
@@ -30,6 +31,7 @@ func (server *Server) Initialize(config *config.Config) {
 func (server *Server) setRouters() {
 	server.Get("/counter/{uuid:[a-z0-9-]+}", server.GetCounter)
 	server.Post("/counter", server.CreateCounter) // body : {"duration-millis" : n}
+	server.Post("/counter/{uuid:[a-z0-9-]+}", server.CreateCounter) // body : {"duration-millis" : n}
 	server.Put("/counter/{uuid:[a-z0-9-]+}", server.UpdateCounter)
 	server.Delete("/counter/{uuid:[a-z0-9-]+}", server.DeleteCounter)
 }
@@ -86,10 +88,24 @@ func (server *Server) GetCounter(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) CreateCounter(w http.ResponseWriter, r *http.Request) {
 	// TODO: 새로운 카운터 세션을 생성해서 반환
-//	vars := mux.Vars(r)
-//	durationMillis := vars["duration-millis"]
+	vars := mux.Vars(r)
+	id := vars["uuid"]
+	
+	if id == "" {
+		uuidV4, _ := uuid.NewV4()
+		id = uuidV4.String()
+	}
+	
+	counter := model.Counter{UUID:id, Count:1}
+	
+	err := json.NewDecoder(r.Body).Decode(&counter)
+	
+	if err != nil {
+		log.Panic(err)
+	}
+		
+	server.Repo.Set(id, counter)
 
-	counter := model.Counter{UUID: "test-uuid-001", Count:1}
 	respondJSON(w, http.StatusOK, counter)
 }
 
@@ -98,12 +114,17 @@ func (server *Server) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 
-	counter := model.Counter{UUID: uuid, Count:2}
+	counter := server.Repo.Increse(uuid)
+	
 	respondJSON(w, http.StatusOK, counter)
 }
 
 func (server *Server) DeleteCounter(w http.ResponseWriter, r *http.Request) {
 	// TODO 카운터 삭제
-	counter := model.Counter{UUID: "test-uuid-001", Count:0}
+	vars := mux.Vars(r)
+	uuid := vars["uuid"]
+
+	counter := server.Repo.Delete(uuid)
+	
 	respondJSON(w, http.StatusOK, counter)
 }
