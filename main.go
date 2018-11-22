@@ -6,9 +6,13 @@ import (
 )
 
 func main() {
-	config := &config.Config{}	
+	config := &config.Config{
+		RedisAddr:"localhost:6379",
+		RedisPassword:""}	
+	
 	server := &server.Server{}
 	server.Initialize(config)
+	
 	server.Run(":8080")
 }
 

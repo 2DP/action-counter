@@ -25,7 +25,7 @@ func (server *Server) Initialize(config *config.Config) {
 	server.Router = mux.NewRouter()
 	server.setRouters()
 	
-	server.Repo.Initialize()
+	server.Repo.Initialize(config)
 }
 
 func (server *Server) setRouters() {
@@ -34,6 +34,9 @@ func (server *Server) setRouters() {
 	server.Post("/counter/{uuid:[a-z0-9-]+}", server.CreateCounter) // body : {"duration-millis" : n}
 	server.Put("/counter/{uuid:[a-z0-9-]+}", server.UpdateCounter)
 	server.Delete("/counter/{uuid:[a-z0-9-]+}", server.DeleteCounter)
+	
+	server.Get("/redis/{key:[a-z0-9]+}", server.GetFromRedis)
+	server.Put("/redis", server.SetToRedis) // body {"key":"key","value":"value"}
 }
 
 func (server *Server) Run(host string) {
@@ -127,4 +130,29 @@ func (server *Server) DeleteCounter(w http.ResponseWriter, r *http.Request) {
 	counter := server.Repo.Delete(uuid)
 	
 	respondJSON(w, http.StatusOK, counter)
+}
+
+
+
+func (server *Server) GetFromRedis(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["key"]
+	
+	value := server.Repo.GetFromRedis(key)
+	
+	respondJSON(w, http.StatusOK, value)
+}
+
+func (server *Server) SetToRedis(w http.ResponseWriter, r *http.Request) {
+	param := model.RedisParam{}
+	err := json.NewDecoder(r.Body).Decode(&param)
+	
+	if err != nil {
+		panic(err)
+		return
+	}
+	
+	server.Repo.SetToRedis(&param)
+	
+	respondJSON(w, http.StatusOK, param)
 }
